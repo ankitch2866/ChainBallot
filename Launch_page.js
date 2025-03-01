@@ -66,7 +66,7 @@ cursorTrail.style.display = 'none';
 
 // Button click handler
 document.getElementById('launchDapp').addEventListener('click', function() {
-    window.location.href = 'https://your-dapp-url.com';
+    window.location.href = 'https://chainballet5555.surge.sh/';
 });
 
 // Initialize effects
