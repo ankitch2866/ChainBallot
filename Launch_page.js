@@ -123,7 +123,7 @@ document.querySelector('.about-text')?.addEventListener('mouseleave', (e) => {
 
 // Launch DApp button
 document.getElementById('launchDapp')?.addEventListener('click', () => {
-    window.location.href = 'https://chainballot3.surge.sh/';
+    window.location.href = 'https://chainballot-2.surge.sh/';
 });
 
 // Initialize effects
