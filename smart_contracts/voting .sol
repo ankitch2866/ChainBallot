@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 interface IERC721 {
     function balanceOf(address owner) external view returns (uint256);
@@ -7,194 +7,214 @@ interface IERC721 {
 
 contract ChainBallot {
     struct Voting {
+        uint256 id;
         string title;
-        string[] candidates;
-        mapping(string => uint256) votes;
-        mapping(address => bool) hasVoted;
+        string description;
         uint256 startTime;
         uint256 endTime;
-        address nftAddress;
-        address creator;
+        address nftContract;
         bool exists;
-        bool deleted;
-        mapping(string => bool) isCandidate;
+        string[] candidates;
+        mapping(address => bool) voted;
+        mapping(string => uint256) votes;
     }
 
+    // Unique identifier to Voting struct mapping
+    mapping(string => Voting) private votings;
+    // Active voting identifiers
+    string[] private activeIdentifiers;
+    // Mapping from voting identifier to index in activeIdentifiers array
+    mapping(string => uint256) private activeVotingIndex;
+    // Counter for active votings
     uint256 public votingCounter;
-    mapping(uint256 => Voting) private votings;
 
-    // ✅ Clear transaction messages via events
-    event VotingCreated(uint256 indexed votingId, string message);
-    event Voted(uint256 indexed votingId, address voter, string candidate, string message);
-    event CandidateAdded(uint256 indexed votingId, string candidate, string message);
-    event CandidateDeleted(uint256 indexed votingId, string candidate, string message);
-    event VotingDeleted(uint256 indexed votingId, string message);
-
-    modifier votingExists(uint256 votingId) {
-        require(votings[votingId].exists, "Voting does not exist");
-        require(!votings[votingId].deleted, "Voting was deleted by the creator");
-        _;
-    }
-
-    modifier onlyDuringVoting(uint256 votingId) {
-        require(block.timestamp >= votings[votingId].startTime, "Voting has not started");
-        require(block.timestamp <= votings[votingId].endTime, "Voting has ended");
-        _;
-    }
-
-    modifier onlyCreator(uint256 votingId) {
-        require(msg.sender == votings[votingId].creator, "Not the creator of this voting");
-        _;
-    }
-
+    // Create a new voting with given identifier, title, description, times, and NFT contract
     function createVoting(
-        string memory _title,
-        string[] memory _candidates,
-        uint256 _startTime,
-        uint256 _endTime,
-        address _nftAddress
-    ) public {
-        require(_startTime < _endTime, "Start must be before end");
-        require(_candidates.length >= 2, "At least 2 candidates required");
-        require(_nftAddress != address(0), "Invalid NFT address");
+        string memory identifier,
+        string memory title,
+        string memory description,
+        uint256 startTime,
+        uint256 endTime,
+        address nftContract
+    ) external {
+        require(!votings[identifier].exists, "Voting identifier already exists");
+        require(startTime < endTime, "Start time must be before end time");
+        
+        Voting storage v = votings[identifier];
+        v.id = votingCounter;
+        v.title = title;
+        v.description = description;
+        v.startTime = startTime;
+        v.endTime = endTime;
+        v.nftContract = nftContract;
+        v.exists = true;
 
-        Voting storage newVoting = votings[votingCounter];
-        newVoting.title = _title;
-        newVoting.startTime = _startTime;
-        newVoting.endTime = _endTime;
-        newVoting.nftAddress = _nftAddress;
-        newVoting.creator = msg.sender;
-        newVoting.exists = true;
-        newVoting.deleted = false;
+        activeVotingIndex[identifier] = activeIdentifiers.length;
+        activeIdentifiers.push(identifier);
 
-        for (uint256 i = 0; i < _candidates.length; i++) {
-            newVoting.candidates.push(_candidates[i]);
-            newVoting.votes[_candidates[i]] = 0;
-            newVoting.isCandidate[_candidates[i]] = true;
-        }
-
-        emit VotingCreated(votingCounter, "Voting created successfully");
         votingCounter++;
     }
 
-    function vote(uint256 votingId, string memory candidate)
-        public
-        votingExists(votingId)
-        onlyDuringVoting(votingId)
-    {
-        Voting storage v = votings[votingId];
-        require(!v.hasVoted[msg.sender], "Already voted");
-        require(v.isCandidate[candidate], "Invalid candidate");
+    // Vote for a candidate in a specific voting by identifier
+    function vote(string memory identifier, string memory candidate) external {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        require(block.timestamp >= v.startTime, "Voting has not started yet");
+        require(block.timestamp <= v.endTime, "Voting has already ended");
 
-        IERC721 nft = IERC721(v.nftAddress);
-        require(nft.balanceOf(msg.sender) > 0, "You must own the NFT to vote");
-
-        v.votes[candidate]++;
-        v.hasVoted[msg.sender] = true;
-
-        emit Voted(votingId, msg.sender, candidate, "Vote successful");
-    }
-
-    function addCandidate(uint256 votingId, string memory candidate)
-        public
-        votingExists(votingId)
-        onlyCreator(votingId)
-    {
-        Voting storage v = votings[votingId];
-        require(!v.isCandidate[candidate], "Candidate already exists");
-
-        v.candidates.push(candidate);
-        v.votes[candidate] = 0;
-        v.isCandidate[candidate] = true;
-
-        emit CandidateAdded(votingId, candidate, "Candidate added successfully");
-    }
-
-    function deleteCandidate(uint256 votingId, string memory candidate)
-        public
-        votingExists(votingId)
-        onlyCreator(votingId)
-    {
-        Voting storage v = votings[votingId];
-        require(v.isCandidate[candidate], "Candidate does not exist");
-
-        v.isCandidate[candidate] = false;
-
+        // Check NFT ownership
+        require(IERC721(v.nftContract).balanceOf(msg.sender) > 0, "Must own NFT to vote");
+        // Check if already voted
+        require(!v.voted[msg.sender], "Address has already voted");
+        
+        // Check candidate exists
+        bool found = false;
         for (uint256 i = 0; i < v.candidates.length; i++) {
             if (keccak256(bytes(v.candidates[i])) == keccak256(bytes(candidate))) {
-                v.candidates[i] = v.candidates[v.candidates.length - 1];
-                v.candidates.pop();
+                found = true;
                 break;
             }
         }
+        require(found, "Candidate does not exist");
 
-        emit CandidateDeleted(votingId, candidate, "Candidate deleted successfully");
+        // Record vote
+        v.votes[candidate]++;
+        v.voted[msg.sender] = true;
     }
 
-    function deleteVoting(uint256 votingId)
-        public
-        onlyCreator(votingId)
-    {
-        require(votings[votingId].exists, "Voting does not exist");
-        require(!votings[votingId].deleted, "Voting already deleted");
-
-        votings[votingId].deleted = true;
-
-        emit VotingDeleted(votingId, "Voting deleted successfully");
+    // Add a candidate to an existing voting
+    function addCandidate(string memory identifier, string memory candidate) external {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        
+        // Ensure candidate not already added
+        for (uint256 i = 0; i < v.candidates.length; i++) {
+            require(
+                keccak256(bytes(v.candidates[i])) != keccak256(bytes(candidate)),
+                "Candidate already exists"
+            );
+        }
+        v.candidates.push(candidate);
+        // Initial votes default to 0 (mapping default)
     }
 
-    function getVotes(uint256 votingId, string memory candidate)
-        public
-        view
-        votingExists(votingId)
-        returns (uint256)
-    {
-        return votings[votingId].votes[candidate];
+    // Delete a candidate from an existing voting
+    function deleteCandidate(string memory identifier, string memory candidate) external {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+
+        uint256 index = v.candidates.length; // invalid index
+        for (uint256 i = 0; i < v.candidates.length; i++) {
+            if (keccak256(bytes(v.candidates[i])) == keccak256(bytes(candidate))) {
+                index = i;
+                break;
+            }
+        }
+        require(index < v.candidates.length, "Candidate not found");
+
+        // Remove candidate by swapping with last and popping
+        v.candidates[index] = v.candidates[v.candidates.length - 1];
+        v.candidates.pop();
+        // Reset votes for candidate
+        delete v.votes[candidate];
     }
 
-    function getCandidates(uint256 votingId)
-        public
-        view
-        votingExists(votingId)
-        returns (string[] memory)
-    {
-        return votings[votingId].candidates;
+    // Delete an entire voting
+    function deleteVoting(string memory identifier) external {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+
+        // Remove from activeIdentifiers array
+        uint256 index = activeVotingIndex[identifier];
+        string memory lastId = activeIdentifiers[activeIdentifiers.length - 1];
+        activeIdentifiers[index] = lastId;
+        activeVotingIndex[lastId] = index;
+        activeIdentifiers.pop();
+        delete activeVotingIndex[identifier];
+
+        // Mark voting as non-existent
+        v.exists = false;
+        votingCounter--;
+        // Note: Data in mappings remains but is inaccessible since exists is false
     }
 
-    function hasVoterVoted(uint256 votingId, address voter)
-        public
-        view
-        votingExists(votingId)
-        returns (bool)
-    {
-        return votings[votingId].hasVoted[voter];
+    // Get vote count for a specific candidate in a voting
+    function getVotes(string memory identifier, string memory candidate) external view returns (uint256) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+
+        // Check candidate exists
+        bool found = false;
+        for (uint256 i = 0; i < v.candidates.length; i++) {
+            if (keccak256(bytes(v.candidates[i])) == keccak256(bytes(candidate))) {
+                found = true;
+                break;
+            }
+        }
+        require(found, "Candidate does not exist");
+        return v.votes[candidate];
     }
 
-    function getVotingDetails(uint256 votingId)
-        public
-        view
-        votingExists(votingId)
-        returns (string memory title, address nftAddress, uint256 startTime, uint256 endTime, address creator)
-    {
-        Voting storage v = votings[votingId];
-        return (v.title, v.nftAddress, v.startTime, v.endTime, v.creator);
+    // Get list of candidates for a voting
+    function getCandidates(string memory identifier) external view returns (string[] memory) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        return v.candidates;
     }
 
-    function getStartDate(uint256 votingId)
-        public
-        view
-        votingExists(votingId)
-        returns (uint256)
-    {
-        return votings[votingId].startTime;
+    // Check if a given address has voted in a voting
+    function hasVoterVoted(string memory identifier, address user) external view returns (bool) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        return v.voted[user];
     }
 
-    function getEndDate(uint256 votingId)
-        public
-        view
-        votingExists(votingId)
-        returns (uint256)
-    {
-        return votings[votingId].endTime;
+    // Get voting details: title, description, NFT contract address
+    function getVotingDetails(string memory identifier) external view returns (
+        string memory title,
+        string memory description,
+        address nftContract
+    ) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        return (v.title, v.description, v.nftContract);
+    }
+
+    // Get start time of a voting
+    function getStartDate(string memory identifier) external view returns (uint256) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        return v.startTime;
+    }
+
+    // Get end time of a voting
+    function getEndDate(string memory identifier) external view returns (uint256) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+        return v.endTime;
+    }
+
+    // Get list of all ongoing (active) voting identifiers
+    function getOngoingVotings() external view returns (string[] memory) {
+        return activeIdentifiers;
+    }
+
+    // Get all candidate names and vote counts for a voting
+    function getVotingData(string memory identifier) external view returns (
+        string[] memory candidates,
+        uint256[] memory votesCount
+    ) {
+        Voting storage v = votings[identifier];
+        require(v.exists, "Voting does not exist");
+
+        uint256 candidateCount = v.candidates.length;
+        candidates = new string[](candidateCount);
+        votesCount = new uint256[](candidateCount);
+
+        for (uint256 i = 0; i < candidateCount; i++) {
+            candidates[i] = v.candidates[i];
+            votesCount[i] = v.votes[v.candidates[i]];
+        }
+        return (candidates, votesCount);
     }
 }
