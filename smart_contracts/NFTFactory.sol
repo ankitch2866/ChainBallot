@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol"; // Correct IERC721 import
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./VotingPowerNFT.sol";
 
 contract NFTFactory is Ownable {
@@ -11,11 +11,10 @@ contract NFTFactory is Ownable {
     // Mapping from identifier to deployed VotingPowerNFT contract address
     mapping(string => address) public identifierToContract;
 
-    // Added mappings for user registration and tracking NFT ownership
+    // Track registered users per identifier
     struct IdentifierInfo {
         address[] registeredUsers;
         mapping(address => bool) isRegistered;
-        mapping(address => bool) hasNFT;
     }
 
     mapping(string => IdentifierInfo) private identifiers;
@@ -94,9 +93,9 @@ contract NFTFactory is Ownable {
         return VotingPowerNFT(contractAddr).getUsersWithNFTs();
     }
 
-    // =============== 🔥 Added functions from CheckNFT 🔥 ===================
+    // ========== 🔥 Updated Register & Fetch logic 🔥 ==========
 
-    // Register msg.sender under a specific identifier
+    // Register user address under a specific identifier
     function registerUser(string calldata identifier) external {
         require(identifierToContract[identifier] != address(0), "Identifier not initialized");
 
@@ -104,23 +103,22 @@ contract NFTFactory is Ownable {
         address user = msg.sender;
 
         if (!info.isRegistered[user]) {
-            uint256 balance = IERC721(identifierToContract[identifier]).balanceOf(user);
-
             info.registeredUsers.push(user);
             info.isRegistered[user] = true;
-            info.hasNFT[user] = (balance > 0);
         }
     }
 
-    // Fetch all registered users who do NOT own any NFT from the associated contract
+    // Fetch all registered users who currently do NOT own any NFT
     function fetchData(string calldata identifier) external view returns (address[] memory) {
         require(identifierToContract[identifier] != address(0), "Identifier not initialized");
 
         IdentifierInfo storage info = identifiers[identifier];
+        address nftContract = identifierToContract[identifier];
 
         uint256 count = 0;
         for (uint256 i = 0; i < info.registeredUsers.length; i++) {
-            if (!info.hasNFT[info.registeredUsers[i]]) {
+            uint256 balance = IERC721(nftContract).balanceOf(info.registeredUsers[i]);
+            if (balance == 0) {
                 count++;
             }
         }
@@ -128,7 +126,8 @@ contract NFTFactory is Ownable {
         address[] memory nonOwners = new address[](count);
         uint256 index = 0;
         for (uint256 i = 0; i < info.registeredUsers.length; i++) {
-            if (!info.hasNFT[info.registeredUsers[i]]) {
+            uint256 balance = IERC721(nftContract).balanceOf(info.registeredUsers[i]);
+            if (balance == 0) {
                 nonOwners[index] = info.registeredUsers[i];
                 index++;
             }
