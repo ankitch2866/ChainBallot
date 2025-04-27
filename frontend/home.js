@@ -88,6 +88,52 @@ const VotingAddress = "0xcd7d674128e9218bd0eafc76060189ea0caf8ff0";
 let web3;
 let votingContract;
 
+// Handle wallet connection
+function handleWalletConnected(account) {
+    const connectButton = document.getElementById('connect-wallet');
+    const buttonIcon = connectButton.querySelector('i');
+    const buttonText = connectButton.querySelector('span');
+    const walletDropdown = document.querySelector('.wallet-dropdown');
+    
+    buttonText.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+    connectButton.disabled = true;
+    
+    // Add connected class to enable dropdown
+    walletDropdown.classList.add('wallet-connected');
+    
+    // Store the connected wallet address
+    localStorage.setItem('connectedWallet', account);
+}
+
+// Profile button handler
+document.getElementById('profile-btn').addEventListener('click', () => {
+    window.location.href = 'profile.html';
+});
+
+// Disconnect button handler
+document.getElementById('disconnect-btn').addEventListener('click', () => {
+    // Clear stored wallet address
+    localStorage.removeItem('connectedWallet');
+    
+    // Reset wallet button
+    const connectButton = document.getElementById('connect-wallet');
+    const buttonText = connectButton.querySelector('span');
+    const walletDropdown = document.querySelector('.wallet-dropdown');
+    
+    buttonText.textContent = 'Connect Wallet';
+    connectButton.disabled = false;
+    
+    // Remove connected class to disable dropdown
+    walletDropdown.classList.remove('wallet-connected');
+    
+    // Reset web3 instance
+    web3 = new Web3(new Web3.providers.HttpProvider('https://polygon-rpc.com'));
+    votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+    
+    // Refresh the page to clear any wallet-dependent content
+    window.location.reload();
+});
+
 // Initialize web3 and contract
 async function init() {
     try {
@@ -97,6 +143,27 @@ async function init() {
         
         // Initialize contract
         votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+        
+        // Remove connected class initially
+        const walletDropdown = document.querySelector('.wallet-dropdown');
+        walletDropdown.classList.remove('wallet-connected');
+        
+        // Check for stored wallet connection
+        const storedAccount = localStorage.getItem('connectedWallet');
+        if (storedAccount && window.ethereum) {
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+                
+                if (account.toLowerCase() === storedAccount.toLowerCase()) {
+                    handleWalletConnected(account);
+                }
+            } catch (error) {
+                console.error('Error reconnecting wallet:', error);
+                localStorage.removeItem('connectedWallet');
+            }
+        }
         
         // Fetch ongoing votings
         await fetchOngoingVotings();
@@ -119,16 +186,7 @@ document.getElementById('connect-wallet').addEventListener('click', async () => 
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const account = accounts[0];
             
-            // Update button text
-            const connectButton = document.getElementById('connect-wallet');
-            connectButton.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
-            connectButton.disabled = true;
-            
-            // Initialize web3 with MetaMask provider
-            web3 = new Web3(window.ethereum);
-            votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
-            
-            console.log('Connected to wallet:', account);
+            handleWalletConnected(account);
         } else {
             showError('Please install MetaMask to connect your wallet');
         }

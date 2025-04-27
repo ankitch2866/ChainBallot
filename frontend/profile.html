@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chain-Ballot | Voting Platform</title>
+    <title>Chain-Ballot | Profile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="profile.css">
 </head>
 <body>
     <header>
@@ -16,38 +17,15 @@
                     Chain-Ballot
                 </a>
             </h1>
-            <div class="wallet-dropdown">
-                <button id="connect-wallet" class="btn-header">
-                    <i class="fas fa-wallet"></i>
-                    <span>Connect Wallet</span>
-                </button>
-                <div class="wallet-dropdown-content">
-                    <button id="profile-btn">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Profile</span>
-                    </button>
-                    <button id="disconnect-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Disconnect</span>
-                    </button>
-                </div>
-            </div>
+            <button id="connect-wallet" class="btn-header">Connect Wallet</button>
         </div>
     </header>
 
     <main>
         <div class="container">
-            <div class="welcome-section">
-                <h2>Welcome to Chain-Ballot</h2>
-                <p>Create and participate in decentralized voting using NFTs</p>
-                <button id="create-voting-btn" class="btn-main">Create New Voting</button>
-            </div>
-
-            <div class="ongoing-votings-section">
-                <h2>Ongoing Votings</h2>
-                <div id="ongoing-votings" class="votings-grid">
-                    <!-- Voting cards will be added here dynamically -->
-                </div>
+            <div class="profile-section">
+                <h2>User Profile</h2>
+                <!-- Profile content will be added here -->
             </div>
         </div>
     </main>
@@ -100,6 +78,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
-    <script src="home.js"></script>
+    <script src="profile.js"></script>
 </body>
 </html> 

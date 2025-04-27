@@ -47,6 +47,7 @@ header h1 i {
 }
 
 .btn-header {
+    position: relative;
     padding: 0.5rem 1.5rem;
     background: linear-gradient(45deg, #FFD700, #FDB931);
     color: #2F4F4F;
@@ -54,6 +55,9 @@ header h1 i {
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-header:hover {
@@ -61,6 +65,10 @@ header h1 i {
     color: #FFD700;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.btn-header i {
+    font-size: 1.1rem;
 }
 
 main {
@@ -456,4 +464,120 @@ footer {
     border-radius: 4px;
     display: inline-block;
     margin-top: 0.2rem;
+}
+
+/* Wallet Dropdown Styles */
+.wallet-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.wallet-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #fff;
+    min-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    z-index: 1000;
+    margin-top: 0;
+    padding: 8px 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Show dropdown only when wallet is connected and parent is hovered */
+.wallet-dropdown.wallet-connected:hover .wallet-dropdown-content {
+    display: block;
+}
+
+/* Add a hover area to bridge the gap */
+.wallet-dropdown.wallet-connected::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    pointer-events: none;
+}
+
+/* Keep dropdown visible when hovering over it */
+.wallet-dropdown.wallet-connected .wallet-dropdown-content:hover {
+    display: block;
+}
+
+/* Add a hover area to the dropdown */
+.wallet-dropdown.wallet-connected .wallet-dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+    pointer-events: none;
+}
+
+.wallet-dropdown-content button {
+    color: #2F4F4F;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.wallet-dropdown-content button:hover {
+    background-color: #f8f9fa;
+    color: #FFD700;
+}
+
+.wallet-dropdown-content button i {
+    margin-right: 12px;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.wallet-dropdown-content button:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.wallet-dropdown-content button:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.wallet-dropdown-content button:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Add a small triangle pointer to the dropdown */
+.wallet-dropdown.wallet-connected .wallet-dropdown-content::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #fff;
+    filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.1));
 }

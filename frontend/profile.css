@@ -1,0 +1,56 @@
+.profile-section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+}
+
+.profile-section h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
+/* Wallet button dropdown styles */
+.wallet-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.wallet-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.wallet-dropdown-content button {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.wallet-dropdown-content button:hover {
+    background-color: #f1f1f1;
+}
+
+.wallet-dropdown:hover .wallet-dropdown-content {
+    display: block;
+}
+
+.wallet-dropdown-content button i {
+    margin-right: 8px;
+    color: #666;
+} 
