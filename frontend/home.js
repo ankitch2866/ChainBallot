@@ -86,64 +86,29 @@ const VotingABI = [
 const VotingAddress = "0xcd7d674128e9218bd0eafc76060189ea0caf8ff0";
 
 let web3;
-let accounts;
 let votingContract;
 
 // Initialize web3 and contract
 async function init() {
-    if (typeof window.ethereum !== 'undefined') {
-        try {
-            web3 = new Web3(window.ethereum);
-            
-            // Check if already connected
-            accounts = await web3.eth.getAccounts();
-            if (accounts.length > 0) {
-                handleWalletConnected(accounts[0]);
-            }
-
-            // Initialize contract with gas limit
-            votingContract = new web3.eth.Contract(VotingABI, VotingAddress, {
-                gas: 3000000, // Set a higher gas limit
-                gasPrice: '20000000000' // Set a reasonable gas price
-            });
-            
-            // Fetch ongoing votings
-            await fetchOngoingVotings();
-        } catch (error) {
-            console.error('Error initializing:', error);
-            showError('Error initializing: ' + error.message);
-        }
-    } else {
-        showError('Please install MetaMask to use this application');
-    }
-}
-
-// Connect wallet button handler
-document.getElementById('connect-wallet').addEventListener('click', async () => {
     try {
-        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        handleWalletConnected(accounts[0]);
+        // Use a public RPC endpoint for Polygon
+        const provider = new Web3.providers.HttpProvider('https://polygon-rpc.com');
+        web3 = new Web3(provider);
+        
+        // Initialize contract
+        votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+        
+        // Fetch ongoing votings
         await fetchOngoingVotings();
     } catch (error) {
-        console.error('Error connecting wallet:', error);
-        alert('Error connecting wallet. Please try again.');
+        console.error('Error initializing:', error);
+        showError('Error initializing: ' + error.message);
     }
-});
-
-// Handle wallet connection
-function handleWalletConnected(account) {
-    const connectButton = document.getElementById('connect-wallet');
-    connectButton.textContent = account.slice(0, 6) + '...' + account.slice(-4);
-    connectButton.style.backgroundColor = '#27ae60';
 }
 
 // Create voting button handler
 document.getElementById('create-voting-btn').addEventListener('click', () => {
-    if (accounts && accounts.length > 0) {
-        window.location.href = 'create-nft.html';
-    } else {
-        alert('Please connect your wallet first');
-    }
+    window.location.href = 'create-nft.html';
 });
 
 // Fetch ongoing votings with improved error handling
@@ -153,10 +118,8 @@ async function fetchOngoingVotings() {
         const votingsContainer = document.getElementById('ongoing-votings');
         votingsContainer.innerHTML = ''; // Clear existing votings
 
-        // Get ongoing votings with gas limit
-        const ongoingVotings = await votingContract.methods.getOngoingVotings().call({
-            gas: 3000000
-        });
+        // Get ongoing votings
+        const ongoingVotings = await votingContract.methods.getOngoingVotings().call();
         console.log('Ongoing votings:', ongoingVotings);
         
         if (!ongoingVotings || ongoingVotings.length === 0) {
@@ -166,18 +129,12 @@ async function fetchOngoingVotings() {
         
         for (const identifier of ongoingVotings) {
             try {
-                // Get voting details with gas limit
-                const details = await votingContract.methods.getVotingDetails(identifier).call({
-                    gas: 3000000
-                });
+                // Get voting details
+                const details = await votingContract.methods.getVotingDetails(identifier).call();
                 
-                // Get start and end times with gas limit
-                const startTime = await votingContract.methods.getStartDate(identifier).call({
-                    gas: 3000000
-                });
-                const endTime = await votingContract.methods.getEndDate(identifier).call({
-                    gas: 3000000
-                });
+                // Get start and end times
+                const startTime = await votingContract.methods.getStartDate(identifier).call();
+                const endTime = await votingContract.methods.getEndDate(identifier).call();
                 
                 const votingCard = createVotingCard({
                     identifier,
@@ -253,22 +210,6 @@ function createVotingCard(voting) {
     
     return card;
 }
-
-// Listen for account changes
-window.ethereum.on('accountsChanged', (newAccounts) => {
-    if (newAccounts.length === 0) {
-        const connectButton = document.getElementById('connect-wallet');
-        connectButton.textContent = 'Connect Wallet';
-        connectButton.style.backgroundColor = '#3498db';
-    } else {
-        handleWalletConnected(newAccounts[0]);
-    }
-});
-
-// Listen for chain changes
-window.ethereum.on('chainChanged', () => {
-    window.location.reload();
-});
 
 // Initialize when page loads
 window.addEventListener('load', init);
