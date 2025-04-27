@@ -1,5 +1,5 @@
 .profile-section {
-    background: #fff;
+    background: rgba(255, 255, 240, 0.98);
     border-radius: 10px;
     padding: 2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -7,9 +7,184 @@
 }
 
 .profile-section h2 {
-    color: #333;
+    color: #2F4F4F;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
+    text-align: center;
+}
+
+.wallet-info {
+    background: rgba(255, 255, 240, 0.98);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.wallet-info h3 {
+    color: #2F4F4F;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+#wallet-address {
+    font-family: monospace;
+    word-break: break-all;
+    padding: 0.8rem;
+    background: #fff;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #2F4F4F;
+}
+
+.user-votings h3 {
+    color: #2F4F4F;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.votings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.voting-card {
+    background: rgba(255, 255, 240, 0.98);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.voting-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+}
+
+.voting-card h4 {
+    color: #2F4F4F;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.voting-card p {
+    color: #708090;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.voting-card .status {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.status-ongoing {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.status-ended {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.voting-card .btn-edit,
+.voting-card .btn-result {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: #FFD700;
+    color: #2F4F4F;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.voting-card .btn-edit:hover,
+.voting-card .btn-result:hover {
+    background: #FDB931;
+    transform: translateY(-2px);
+}
+
+.voting-card .btn-edit:disabled,
+.voting-card .btn-result:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.voting-card .time-info {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 215, 0, 0.3);
+    font-size: 0.8rem;
+    color: #708090;
+}
+
+.voting-card .voting-id {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+    word-break: break-all;
+}
+
+.voting-card .nft-contract {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+    word-break: break-all;
+}
+
+.voting-card .contract-address {
+    color: #27ae60;
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 0.2rem;
+}
+
+.error-message {
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #c62828;
+    text-align: center;
+}
+
+.error-message p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.voting-card.error {
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+}
+
+.voting-card.error h4 {
+    color: #c62828;
+}
+
+.voting-card.error .error-message {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0;
+    margin: 0;
+    text-align: left;
 }
 
 /* Wallet button dropdown styles */

@@ -140,9 +140,9 @@ async function init() {
         // Use a public RPC endpoint for Polygon
         const provider = new Web3.providers.HttpProvider('https://polygon-rpc.com');
         web3 = new Web3(provider);
-        
-        // Initialize contract
-        votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+
+            // Initialize contract
+            votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
         
         // Remove connected class initially
         const walletDropdown = document.querySelector('.wallet-dropdown');
@@ -164,11 +164,11 @@ async function init() {
                 localStorage.removeItem('connectedWallet');
             }
         }
-        
-        // Fetch ongoing votings
-        await fetchOngoingVotings();
-    } catch (error) {
-        console.error('Error initializing:', error);
+            
+            // Fetch ongoing votings
+            await fetchOngoingVotings();
+        } catch (error) {
+            console.error('Error initializing:', error);
         showError('Error initializing: ' + error.message);
     }
 }
@@ -211,13 +211,13 @@ async function fetchOngoingVotings() {
             votingsContainer.innerHTML = '<p>No ongoing votings found.</p>';
             return;
         }
-
+        
         // Create loading indicator
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'loading-indicator';
         loadingIndicator.innerHTML = '<p>Loading votings...</p>';
         votingsContainer.appendChild(loadingIndicator);
-        
+                
         // Process all votings in parallel
         const votingPromises = ongoingVotings.map(async (identifier) => {
             try {
@@ -322,7 +322,7 @@ function createVotingCard(voting) {
 }
 
 // Initialize when page loads
-window.addEventListener('load', init);
+window.addEventListener('load', init); 
 
 // Helper function to show errors
 function showError(message) {
