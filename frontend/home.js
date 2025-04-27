@@ -111,7 +111,34 @@ document.getElementById('create-voting-btn').addEventListener('click', () => {
     window.location.href = 'create-nft.html';
 });
 
-// Fetch ongoing votings with improved error handling
+// Connect wallet button handler
+document.getElementById('connect-wallet').addEventListener('click', async () => {
+    try {
+        if (window.ethereum) {
+            // Request account access
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+            
+            // Update button text
+            const connectButton = document.getElementById('connect-wallet');
+            connectButton.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+            connectButton.disabled = true;
+            
+            // Initialize web3 with MetaMask provider
+            web3 = new Web3(window.ethereum);
+            votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+            
+            console.log('Connected to wallet:', account);
+        } else {
+            showError('Please install MetaMask to connect your wallet');
+        }
+    } catch (error) {
+        console.error('Error connecting wallet:', error);
+        showError('Error connecting wallet: ' + error.message);
+    }
+});
+
+// Fetch ongoing votings with improved error handling and parallel requests
 async function fetchOngoingVotings() {
     try {
         console.log('Fetching ongoing votings...');
@@ -126,38 +153,63 @@ async function fetchOngoingVotings() {
             votingsContainer.innerHTML = '<p>No ongoing votings found.</p>';
             return;
         }
+
+        // Create loading indicator
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading-indicator';
+        loadingIndicator.innerHTML = '<p>Loading votings...</p>';
+        votingsContainer.appendChild(loadingIndicator);
         
-        for (const identifier of ongoingVotings) {
+        // Process all votings in parallel
+        const votingPromises = ongoingVotings.map(async (identifier) => {
             try {
-                // Get voting details
-                const details = await votingContract.methods.getVotingDetails(identifier).call();
+                // Get all details in parallel
+                const [details, startTime, endTime] = await Promise.all([
+                    votingContract.methods.getVotingDetails(identifier).call(),
+                    votingContract.methods.getStartDate(identifier).call(),
+                    votingContract.methods.getEndDate(identifier).call()
+                ]);
                 
-                // Get start and end times
-                const startTime = await votingContract.methods.getStartDate(identifier).call();
-                const endTime = await votingContract.methods.getEndDate(identifier).call();
-                
-                const votingCard = createVotingCard({
+                return {
                     identifier,
                     title: details[0] || 'Untitled',
                     description: details[1] || 'No description available',
                     nftContract: details[2] || '0x0000000000000000000000000000000000000000',
                     startTime: Number(startTime) * 1000,
                     endTime: Number(endTime) * 1000
-                });
-                
-                votingsContainer.appendChild(votingCard);
+                };
             } catch (error) {
                 console.error(`Error processing voting ${identifier}:`, error);
+                return {
+                    identifier,
+                    error: true,
+                    errorMessage: error.message || 'Could not load voting details'
+                };
+            }
+        });
+
+        // Wait for all voting data to be fetched
+        const votingData = await Promise.all(votingPromises);
+        
+        // Remove loading indicator
+        votingsContainer.removeChild(loadingIndicator);
+        
+        // Create and append voting cards
+        votingData.forEach(data => {
+            if (data.error) {
                 const errorCard = document.createElement('div');
                 errorCard.className = 'voting-card error';
                 errorCard.innerHTML = `
                     <h3>Error Loading Voting</h3>
-                    <p>Identifier: ${identifier}</p>
-                    <p class="error-message">Error: ${error.message || 'Could not load voting details'}</p>
+                    <p>Identifier: ${data.identifier}</p>
+                    <p class="error-message">Error: ${data.errorMessage}</p>
                 `;
                 votingsContainer.appendChild(errorCard);
+            } else {
+                const votingCard = createVotingCard(data);
+                votingsContainer.appendChild(votingCard);
             }
-        }
+        });
     } catch (error) {
         console.error('Error fetching ongoing votings:', error);
         showError('Error loading votings: ' + error.message);
