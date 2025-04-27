@@ -323,9 +323,35 @@ textarea {
 }
 
 .error-message {
-    color: #e74c3c;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #c62828;
+    text-align: center;
+}
+
+.error-message p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.voting-card.error {
+    background-color: #fff3f3;
+    border: 1px solid #ffcdd2;
+}
+
+.voting-card.error h3 {
+    color: #c62828;
+}
+
+.voting-card.error .error-message {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0;
+    margin: 0;
+    text-align: left;
 }
 
 footer {

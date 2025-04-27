@@ -101,14 +101,20 @@ async function init() {
                 handleWalletConnected(accounts[0]);
             }
 
-            // Initialize contract
-            votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
+            // Initialize contract with gas limit
+            votingContract = new web3.eth.Contract(VotingABI, VotingAddress, {
+                gas: 3000000, // Set a higher gas limit
+                gasPrice: '20000000000' // Set a reasonable gas price
+            });
             
             // Fetch ongoing votings
             await fetchOngoingVotings();
         } catch (error) {
             console.error('Error initializing:', error);
+            showError('Error initializing: ' + error.message);
         }
+    } else {
+        showError('Please install MetaMask to use this application');
     }
 }
 
@@ -140,15 +146,17 @@ document.getElementById('create-voting-btn').addEventListener('click', () => {
     }
 });
 
-// Fetch ongoing votings
+// Fetch ongoing votings with improved error handling
 async function fetchOngoingVotings() {
     try {
         console.log('Fetching ongoing votings...');
         const votingsContainer = document.getElementById('ongoing-votings');
         votingsContainer.innerHTML = ''; // Clear existing votings
 
-        // Get ongoing votings
-        const ongoingVotings = await votingContract.methods.getOngoingVotings().call();
+        // Get ongoing votings with gas limit
+        const ongoingVotings = await votingContract.methods.getOngoingVotings().call({
+            gas: 3000000
+        });
         console.log('Ongoing votings:', ongoingVotings);
         
         if (!ongoingVotings || ongoingVotings.length === 0) {
@@ -157,63 +165,45 @@ async function fetchOngoingVotings() {
         }
         
         for (const identifier of ongoingVotings) {
-            console.log('Processing voting:', identifier);
-            
             try {
-                // Get voting details
-                const details = await votingContract.methods.getVotingDetails(identifier).call();
-                console.log('Raw voting details:', details);
+                // Get voting details with gas limit
+                const details = await votingContract.methods.getVotingDetails(identifier).call({
+                    gas: 3000000
+                });
                 
-                // Extract values from the details object
-                const title = details[0] || 'Untitled';
-                const description = details[1] || 'No description available';
-                const nftContract = details[2] || '0x0000000000000000000000000000000000000000';
-                
-                console.log('Processed voting details:', { title, description, nftContract });
-                
-                // Get start and end times
-                const startTime = await votingContract.methods.getStartDate(identifier).call();
-                const endTime = await votingContract.methods.getEndDate(identifier).call();
-                console.log('Voting times:', { startTime, endTime });
-                
-                // Convert timestamps to numbers
-                const startTimeNum = Number(startTime);
-                const endTimeNum = Number(endTime);
-                
-                const now = Math.floor(Date.now() / 1000);
-                const isOngoing = now >= startTimeNum && now <= endTimeNum;
+                // Get start and end times with gas limit
+                const startTime = await votingContract.methods.getStartDate(identifier).call({
+                    gas: 3000000
+                });
+                const endTime = await votingContract.methods.getEndDate(identifier).call({
+                    gas: 3000000
+                });
                 
                 const votingCard = createVotingCard({
                     identifier,
-                    title,
-                    description,
-                    nftContract,
-                    startTime: startTimeNum * 1000,
-                    endTime: endTimeNum * 1000
+                    title: details[0] || 'Untitled',
+                    description: details[1] || 'No description available',
+                    nftContract: details[2] || '0x0000000000000000000000000000000000000000',
+                    startTime: Number(startTime) * 1000,
+                    endTime: Number(endTime) * 1000
                 });
                 
                 votingsContainer.appendChild(votingCard);
             } catch (error) {
                 console.error(`Error processing voting ${identifier}:`, error);
-                // Create an error card with more details
                 const errorCard = document.createElement('div');
-                errorCard.className = 'voting-card';
+                errorCard.className = 'voting-card error';
                 errorCard.innerHTML = `
                     <h3>Error Loading Voting</h3>
                     <p>Identifier: ${identifier}</p>
                     <p class="error-message">Error: ${error.message || 'Could not load voting details'}</p>
-                    <p class="error-message">Please check the console for more details</p>
                 `;
                 votingsContainer.appendChild(errorCard);
             }
         }
     } catch (error) {
         console.error('Error fetching ongoing votings:', error);
-        const votingsContainer = document.getElementById('ongoing-votings');
-        votingsContainer.innerHTML = `
-            <p class="error-message">Error loading votings: ${error.message || 'Unknown error'}</p>
-            <p class="error-message">Please check the console for more details</p>
-        `;
+        showError('Error loading votings: ' + error.message);
     }
 }
 
@@ -281,4 +271,15 @@ window.ethereum.on('chainChanged', () => {
 });
 
 // Initialize when page loads
-window.addEventListener('load', init); 
+window.addEventListener('load', init);
+
+// Helper function to show errors
+function showError(message) {
+    const votingsContainer = document.getElementById('ongoing-votings');
+    votingsContainer.innerHTML = `
+        <div class="error-message">
+            <p>${message}</p>
+            <p>Please try refreshing the page or check your network connection.</p>
+        </div>
+    `;
+} 
