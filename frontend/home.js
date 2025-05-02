@@ -225,21 +225,28 @@ async function fetchOngoingVotings() {
 
         votingsContainer.removeChild(loadingIndicator);
 
-        results.forEach(data => {
-            if (data.error) {
-                const errorCard = document.createElement('div');
-                errorCard.className = 'voting-card error';
-                errorCard.innerHTML = `
-                    <h3>Error Loading Voting</h3>
-                    <p>Identifier: ${data.identifier}</p>
-                    <p class="error-message">Error: ${data.errorMessage}</p>
-                `;
-                votingsContainer.appendChild(errorCard);
-            } else {
-                const votingCard = createVotingCard(data);
-                votingsContainer.appendChild(votingCard);
-            }
-        });
+      // Sort: Ongoing first, Ended after
+results.sort((a, b) => {
+    const aEnded = a.endTime <= Date.now();
+    const bEnded = b.endTime <= Date.now();
+    return aEnded - bEnded; // false (0) comes before true (1)
+});
+
+results.forEach(data => {
+    if (data.error) {
+        const errorCard = document.createElement('div');
+        errorCard.className = 'voting-card error';
+        errorCard.innerHTML = `
+            <h3>Error Loading Voting</h3>
+            <p>Identifier: ${data.identifier}</p>
+            <p class="error-message">Error: ${data.errorMessage}</p>
+        `;
+        votingsContainer.appendChild(errorCard);
+    } else {
+        const votingCard = createVotingCard(data);
+        votingsContainer.appendChild(votingCard);
+    }
+});
     } catch (error) {
         console.error('Error fetching ongoing votings:', error);
         showError('Error loading votings: ' + error.message);
