@@ -94,14 +94,10 @@ function handleWalletConnected(account) {
     const buttonIcon = connectButton.querySelector('i');
     const buttonText = connectButton.querySelector('span');
     const walletDropdown = document.querySelector('.wallet-dropdown');
-    
+
     buttonText.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
     connectButton.disabled = true;
-    
-    // Add connected class to enable dropdown
     walletDropdown.classList.add('wallet-connected');
-    
-    // Store the connected wallet address
     localStorage.setItem('connectedWallet', account);
 }
 
@@ -112,50 +108,35 @@ document.getElementById('profile-btn').addEventListener('click', () => {
 
 // Disconnect button handler
 document.getElementById('disconnect-btn').addEventListener('click', () => {
-    // Clear stored wallet address
     localStorage.removeItem('connectedWallet');
-    
-    // Reset wallet button
     const connectButton = document.getElementById('connect-wallet');
     const buttonText = connectButton.querySelector('span');
     const walletDropdown = document.querySelector('.wallet-dropdown');
-    
+
     buttonText.textContent = 'Connect Wallet';
     connectButton.disabled = false;
-    
-    // Remove connected class to disable dropdown
     walletDropdown.classList.remove('wallet-connected');
-    
-    // Reset web3 instance
+
     web3 = new Web3(new Web3.providers.HttpProvider('https://polygon-rpc.com'));
     votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
-    
-    // Refresh the page to clear any wallet-dependent content
     window.location.reload();
 });
 
 // Initialize web3 and contract
 async function init() {
     try {
-        // Use a public RPC endpoint for Polygon
         const provider = new Web3.providers.HttpProvider('https://polygon-rpc.com');
         web3 = new Web3(provider);
+        votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
 
-            // Initialize contract
-            votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
-        
-        // Remove connected class initially
         const walletDropdown = document.querySelector('.wallet-dropdown');
         walletDropdown.classList.remove('wallet-connected');
-        
-        // Check for stored wallet connection
+
         const storedAccount = localStorage.getItem('connectedWallet');
         if (storedAccount && window.ethereum) {
             try {
-                // Request account access
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const account = accounts[0];
-                
                 if (account.toLowerCase() === storedAccount.toLowerCase()) {
                     handleWalletConnected(account);
                 }
@@ -164,11 +145,10 @@ async function init() {
                 localStorage.removeItem('connectedWallet');
             }
         }
-            
-            // Fetch ongoing votings
-            await fetchOngoingVotings();
-        } catch (error) {
-            console.error('Error initializing:', error);
+
+        await fetchOngoingVotings();
+    } catch (error) {
+        console.error('Error initializing:', error);
         showError('Error initializing: ' + error.message);
     }
 }
@@ -182,10 +162,8 @@ document.getElementById('create-voting-btn').addEventListener('click', () => {
 document.getElementById('connect-wallet').addEventListener('click', async () => {
     try {
         if (window.ethereum) {
-            // Request account access
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const account = accounts[0];
-            
             handleWalletConnected(account);
         } else {
             showError('Please install MetaMask to connect your wallet');
@@ -196,64 +174,58 @@ document.getElementById('connect-wallet').addEventListener('click', async () => 
     }
 });
 
-// Fetch ongoing votings with improved error handling and parallel requests
+// Fixed fetch function: batching to avoid rate limits
 async function fetchOngoingVotings() {
     try {
-        console.log('Fetching ongoing votings...');
         const votingsContainer = document.getElementById('ongoing-votings');
-        votingsContainer.innerHTML = ''; // Clear existing votings
-
-        // Get ongoing votings
+        votingsContainer.innerHTML = '';
         const ongoingVotings = await votingContract.methods.getOngoingVotings().call();
-        console.log('Ongoing votings:', ongoingVotings);
-        
+
         if (!ongoingVotings || ongoingVotings.length === 0) {
             votingsContainer.innerHTML = '<p>No ongoing votings found.</p>';
             return;
         }
-        
-        // Create loading indicator
+
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'loading-indicator';
         loadingIndicator.innerHTML = '<p>Loading votings...</p>';
         votingsContainer.appendChild(loadingIndicator);
-                
-        // Process all votings in parallel
-        const votingPromises = ongoingVotings.map(async (identifier) => {
-            try {
-                // Get all details in parallel
-                const [details, startTime, endTime] = await Promise.all([
-                    votingContract.methods.getVotingDetails(identifier).call(),
-                    votingContract.methods.getStartDate(identifier).call(),
-                    votingContract.methods.getEndDate(identifier).call()
-                ]);
-                
-                return {
-                    identifier,
-                    title: details[0] || 'Untitled',
-                    description: details[1] || 'No description available',
-                    nftContract: details[2] || '0x0000000000000000000000000000000000000000',
-                    startTime: Number(startTime) * 1000,
-                    endTime: Number(endTime) * 1000
-                };
-            } catch (error) {
-                console.error(`Error processing voting ${identifier}:`, error);
-                return {
-                    identifier,
-                    error: true,
-                    errorMessage: error.message || 'Could not load voting details'
-                };
-            }
-        });
 
-        // Wait for all voting data to be fetched
-        const votingData = await Promise.all(votingPromises);
-        
-        // Remove loading indicator
+        const concurrencyLimit = 4;
+        const results = [];
+
+        for (let i = 0; i < ongoingVotings.length; i += concurrencyLimit) {
+            const batch = ongoingVotings.slice(i, i + concurrencyLimit);
+            const batchPromises = batch.map(async (identifier) => {
+                try {
+                    const [details, startTime, endTime] = await Promise.all([
+                        votingContract.methods.getVotingDetails(identifier).call(),
+                        votingContract.methods.getStartDate(identifier).call(),
+                        votingContract.methods.getEndDate(identifier).call()
+                    ]);
+                    return {
+                        identifier,
+                        title: details[0] || 'Untitled',
+                        description: details[1] || 'No description available',
+                        nftContract: details[2] || '0x0000000000000000000000000000000000000000',
+                        startTime: Number(startTime) * 1000,
+                        endTime: Number(endTime) * 1000
+                    };
+                } catch (error) {
+                    return {
+                        identifier,
+                        error: true,
+                        errorMessage: error.message || 'Could not load voting details'
+                    };
+                }
+            });
+            const batchResults = await Promise.all(batchPromises);
+            results.push(...batchResults);
+        }
+
         votingsContainer.removeChild(loadingIndicator);
-        
-        // Create and append voting cards
-        votingData.forEach(data => {
+
+        results.forEach(data => {
             if (data.error) {
                 const errorCard = document.createElement('div');
                 errorCard.className = 'voting-card error';
@@ -277,12 +249,11 @@ async function fetchOngoingVotings() {
 function createVotingCard(voting) {
     const card = document.createElement('div');
     card.className = 'voting-card';
-    
+
     const isOngoing = voting.endTime > Date.now();
     const statusClass = isOngoing ? 'status-ongoing' : 'status-ended';
     const statusText = isOngoing ? 'Ongoing' : 'Ended';
-    
-    // Convert timestamps to IST
+
     const startTimeIST = new Date(voting.startTime).toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         year: 'numeric',
@@ -292,7 +263,7 @@ function createVotingCard(voting) {
         minute: '2-digit',
         hour12: true
     });
-    
+
     const endTimeIST = new Date(voting.endTime).toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         year: 'numeric',
@@ -302,7 +273,7 @@ function createVotingCard(voting) {
         minute: '2-digit',
         hour12: true
     });
-    
+
     card.innerHTML = `
         <h3>${voting.title}</h3>
         <p>${voting.description}</p>
@@ -317,14 +288,11 @@ function createVotingCard(voting) {
             ${isOngoing ? 'Vote Now' : 'Voting Ended'}
         </button>
     `;
-    
+
     return card;
 }
 
-// Initialize when page loads
-window.addEventListener('load', init); 
-
-// Helper function to show errors
+// Helper to show errors
 function showError(message) {
     const votingsContainer = document.getElementById('ongoing-votings');
     votingsContainer.innerHTML = `
@@ -333,4 +301,7 @@ function showError(message) {
             <p>Please try refreshing the page or check your network connection.</p>
         </div>
     `;
-} 
+}
+
+// Start app
+window.addEventListener('load', init);
