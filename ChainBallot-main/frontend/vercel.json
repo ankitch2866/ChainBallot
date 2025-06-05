@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/", "destination": "/Launch_page.html" }
-  ]
-}
