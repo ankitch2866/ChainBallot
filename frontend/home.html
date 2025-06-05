@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain-Ballot | Voting Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>
+                <a href="https://chain-ballot-alpha.vercel.app/" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-link"></i>
+                Chain-Ballot
+                </a>
+            </h1>
+            <div class="wallet-dropdown">
+                <button id="connect-wallet" class="btn-header">
+                    <i class="fas fa-wallet"></i>
+                    <span>Connect Wallet</span>
+                </button>
+                <div class="wallet-dropdown-content">
+                    <button id="profile-btn">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Profile</span>
+                    </button>
+                    <button id="disconnect-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Disconnect</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="welcome-section">
+                <h2>Welcome to Chain-Ballot</h2>
+                <p>Create and participate in decentralized voting using NFTs</p>
+                <button id="create-voting-btn" class="btn-main">Create New Voting</button>
+            </div>
+
+            <div class="ongoing-votings-section">
+                <h2>Ongoing Votings</h2>
+                <div id="ongoing-votings" class="votings-grid">
+                    <!-- Voting cards will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content container">
+            <div class="footer-section">
+                <h3>CHAIN-BALLOT</h3>
+                <p>Make your vote count. Chain-Ballot revolutionizes democracy with blockchain-powered, user-friendly voting solutions.</p>
+            </div>
+            <div class="footer-section">
+                <h3>CONTACT</h3>
+                <p><i class="fas fa-envelope"></i> ankitchauhan2866@gmail.com</p>
+                <p><i class="fas fa-phone"></i> +91 9643919026</p>
+                <p><i class="fas fa-map-marker-alt"></i> Faridabad, India</p>
+            </div>
+            <div class="footer-section">
+                <h3>QUICK LINKS</h3>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="https://chainballot-nfts.surge.sh/">NFT-Center</a></li>
+                    <li><a href="https://github.com/ankitch2866/ChainBallot/tree/main/smart_contracts">Contract</a></li>
+                    <li><a href="https://medium.com/@ankitchauhan2866_54225/chainballot-aa57b7cc9dc9">About</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="social-links">
+            <a target="_blank" href="https://x.com/ankitVK2866" class="social-icon">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a target="_blank" href="https://github.com/ankitch2866/" class="social-icon">
+                <i class="fab fa-github"></i>
+            </a>
+            <a target="_blank" href="https://t.me/ankit2866" class="social-icon">
+                <i class="fab fa-telegram"></i>
+            </a>
+            <a target="_blank" href="https://discord.gg/8x9Y2uU8" class="social-icon">
+                <i class="fab fa-discord"></i>
+            </a>
+            <a target="_blank" href="https://medium.com/@ankitchauhan2866_54225/chainballot-aa57b7cc9dc9" class="social-icon">
+                <i class="fab fa-medium"></i>
+            </a>
+            <a target="_blank" href="https://www.linkedin.com/in/ankit2866/" class="social-icon">
+                <i class="fab fa-linkedin"></i>
+            </a>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Chain-Ballot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
+    <script src="home.js"></script>
+</body>
+</html> 
