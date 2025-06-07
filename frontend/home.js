@@ -312,7 +312,7 @@ function createVotingCard(voting) {
     minute: "2-digit",
     hour12: true,
   });
-
+ 
   card.innerHTML = `
         <h3>${voting.title}</h3>
         <p>${voting.description}</p>
@@ -327,7 +327,7 @@ function createVotingCard(voting) {
         <span class="status ${statusClass}">${statusText}</span>
         ${
           isOngoing
-            ? `<button class="btn-vote btn-vote-now" >Vote Now</button>`
+            ? `<a href="vote.html?id=${voting.identifier}" class="btn-vote btn-vote-now" >Vote Now</a>`
             : `<a href="result.html?id=${voting.identifier}" class="btn-result" >View Result</a>`
         }
     `;

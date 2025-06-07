@@ -127,14 +127,15 @@ async function loadResult(identifier) {
         }
         const startTime = start ? new Date(Number(start) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';
         const endTime = end ? new Date(Number(end) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';
-        document.getElementById('creator-name').innerHTML = `<b>Creator:</b> <span class="contract-address">${creatorAddr}</span>`;
         document.getElementById('voting-details').innerHTML = `
             <p><b>Title:</b> ${title}</p>
-            <p><b>Identifier:</b> ${identifier}</p>
+            <p><b>Identifier:</b> ${identifier}</p> 
+            <p><b>Creator:</b> <span class="contract-address">${creatorAddr}</span></p>
             <p><b>Description:</b> ${description}</p>
             <p><b>NFT Contract:</b> <span class="contract-address">${nftContract}</span></p>
             <p><b>Start Time:</b> ${startTime} (IST)</p>
             <p><b>End Time:</b> ${endTime} (IST)</p>
+           
         `;
         // 6. NFT Owners & Voting Status
         let owners = [];
@@ -155,7 +156,7 @@ async function loadResult(identifier) {
                 } catch (e) {}
                 const ownerCard = document.createElement('div');
                 ownerCard.className = 'voting-card nft-owner-card';
-                ownerCard.innerHTML = `<span class="contract-address">${addr}</span> <span style="float:right;">${voted ? '<i class=\'fas fa-check-circle\' style=\'color:#27ae60;\'></i>' : '<i class=\'fas fa-times-circle\' style=\'color:#e74c3c;\'></i>'}</span>`;
+                ownerCard.innerHTML = `<span class="contract-address">${addr}</span> <span class="status-icon" title="${voted ? 'Voted' : 'Not Voted'}">${voted ? '<i class=\'fas fa-check-circle\'></i>' : '<i class=\'fas fa-times-circle\'></i>'}</span>`;
                 ownersList.appendChild(ownerCard);
             }
         }

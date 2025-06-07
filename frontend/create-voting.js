@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('votingIdentifier');
                     localStorage.removeItem('nftContractAddress');
                     // Redirect to home page
-                    window.location.href = 'index.html';
+                    window.location.href = 'home.html';
                 };
                 resultSection.appendChild(backButton);
 

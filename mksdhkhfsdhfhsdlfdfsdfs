@@ -1,0 +1,278 @@
+warning: in the working copy of 'frontend/home.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/main.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/result.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/result.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/frontend/create-voting.js b/frontend/create-voting.js[m
+[1mindex eb97a58..7632e24 100644[m
+[1m--- a/frontend/create-voting.js[m
+[1m+++ b/frontend/create-voting.js[m
+[36m@@ -234,7 +234,7 @@[m [mdocument.addEventListener('DOMContentLoaded', () => {[m
+                     localStorage.removeItem('votingIdentifier');[m
+                     localStorage.removeItem('nftContractAddress');[m
+                     // Redirect to home page[m
+[31m-                    window.location.href = 'index.html';[m
+[32m+[m[32m                    window.location.href = 'home.html';[m
+                 };[m
+                 resultSection.appendChild(backButton);[m
+ [m
+[1mdiff --git a/frontend/home.js b/frontend/home.js[m
+[1mindex 3091250..b3c1b28 100644[m
+[1m--- a/frontend/home.js[m
+[1m+++ b/frontend/home.js[m
+[36m@@ -312,7 +312,7 @@[m [mfunction createVotingCard(voting) {[m
+     minute: "2-digit",[m
+     hour12: true,[m
+   });[m
+[31m-[m
+[32m+[m[41m [m
+   card.innerHTML = `[m
+         <h3>${voting.title}</h3>[m
+         <p>${voting.description}</p>[m
+[36m@@ -327,7 +327,7 @@[m [mfunction createVotingCard(voting) {[m
+         <span class="status ${statusClass}">${statusText}</span>[m
+         ${[m
+           isOngoing[m
+[31m-            ? `<button class="btn-vote btn-vote-now" >Vote Now</button>`[m
+[32m+[m[32m            ? `<a href="vote.html?id=${voting.identifier}" class="btn-vote btn-vote-now" >Vote Now</a>`[m
+             : `<a href="result.html?id=${voting.identifier}" class="btn-result" >View Result</a>`[m
+         }[m
+     `;[m
+[1mdiff --git a/frontend/main.css b/frontend/main.css[m
+[1mindex 8d6c35b..0c25875 100644[m
+[1m--- a/frontend/main.css[m
+[1m+++ b/frontend/main.css[m
+[36m@@ -610,11 +610,14 @@[m [mfooter {[m
+     justify-content: space-between;[m
+     background: linear-gradient(90deg, rgba(255,215,0,0.07), rgba(46,204,113,0.07));[m
+     border: 1.5px solid #FFD70033;[m
+[31m-    padding: 1rem 1.5rem;[m
+[32m+[m[32m    padding: 1.2rem 1.8rem;[m
+     font-size: 1rem;[m
+     margin-bottom: 0.5rem;[m
+     border-radius: 8px;[m
+     animation: fadeIn 0.7s;[m
+[32m+[m[32m    min-width: 0;[m
+[32m+[m[32m    word-break: break-all;[m
+[32m+[m[32m    gap: 2rem;[m
+ }[m
+ [m
+ .btn-result, .btn-vote-now {[m
+[36m@@ -675,4 +678,138 @@[m [mfooter {[m
+ .btn-result:hover::after, .btn-vote-now:hover::after {[m
+     left: 120%;[m
+     transition: left 0.5s;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m#nft-owners-list.votings-grid {[m
+[32m+[m[32m    grid-template-columns: repeat(2, minmax(0, 1fr));[m
+[32m+[m[32m    gap: 2rem;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.nft-owner-card .contract-address {[m
+[32m+[m[32m    font-size: 1rem;[m
+[32m+[m[32m    padding: 0.3rem 0.7rem;[m
+[32m+[m[32m    border-radius: 6px;[m
+[32m+[m[32m    background: rgba(0,0,0,0.08);[m
+[32m+[m[32m    word-break: break-all;[m
+[32m+[m[32m    max-width: 100%;[m
+[32m+[m[32m    display: inline-block;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.nft-owner-card .status-icon {[m
+[32m+[m[32m    margin-left: 1.2rem;[m
+[32m+[m[32m    font-size: 1.7rem;[m
+[32m+[m[32m    vertical-align: middle;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m@media (max-width: 700px) {[m
+[32m+[m[32m    #nft-owners-list.votings-grid {[m
+[32m+[m[32m        grid-template-columns: 1fr;[m
+[32m+[m[32m    }[m
+[32m+[m[32m    .nft-owner-card {[m
+[32m+[m[32m        padding: 1rem 0.7rem;[m
+[32m+[m[32m        font-size: 0.95rem;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m#voting-details-section {[m
+[32m+[m[32m    background: rgba(255,255,240,0.98);[m
+[32m+[m[32m    border-radius: 14px;[m
+[32m+[m[32m    box-shadow: 0 2px 12px rgba(0,0,0,0.07);[m
+[32m+[m[32m    padding: 2.2rem 2.5rem 2rem 2.5rem;[m
+[32m+[m[32m    margin-bottom: 2.5rem;[m
+[32m+[m[32m    border: 1.5px solid #FFD70033;[m
+[32m+[m[32m}[m
+[32m+[m[32m#voting-details-section h2 {[m
+[32m+[m[32m    text-align: center;[m
+[32m+[m[32m    color: #2F4F4F;[m
+[32m+[m[32m    font-size: 2rem;[m
+[32m+[m[32m    margin-bottom: 1.5rem;[m
+[32m+[m[32m}[m
+[32m+[m[32m#voting-details-section p {[m
+[32m+[m[32m    margin: 0.7rem 0;[m
+[32m+[m[32m    font-size: 1.08rem;[m
+[32m+[m[32m    color: #2F4F4F;[m
+[32m+[m[32m    font-weight: 500;[m
+[32m+[m[32m    letter-spacing: 0.01em;[m
+[32m+[m[32m    line-height: 1.6;[m
+[32m+[m[32m}[m
+[32m+[m[32m#voting-details-section .contract-address {[m
+[32m+[m[32m    background: #f3f3e6;[m
+[32m+[m[32m    color: #27ae60;[m
+[32m+[m[32m    padding: 0.22rem 0.7rem;[m
+[32m+[m[32m    border-radius: 5px;[m
+[32m+[m[32m    font-family: monospace;[m
+[32m+[m[32m    font-size: 1.01rem;[m
+[32m+[m[32m}[m
+[32m+[m[32m.nft-owner-card {[m
+[32m+[m[32m    gap: 1rem;[m
+[32m+[m[32m}[m
+[32m+[m[32m.nft-owner-card .contract-address {[m
+[32m+[m[32m    font-size: 1rem;[m
+[32m+[m[32m    padding: 0.3rem 1.1rem;[m
+[32m+[m[32m    border-radius: 6px;[m
+[32m+[m[32m    background: rgba(0,0,0,0.08);[m
+[32m+[m[32m    word-break: break-all;[m
+[32m+[m[32m    max-width: 100%;[m
+[32m+[m[32m    display: inline-block;[m
+[32m+[m[32m}[m
+[32m+[m[32m.nft-owner-card .status-icon {[m
+[32m+[m[32m    margin-left: 0.7rem;[m
+[32m+[m[32m    font-size: 1.7rem;[m
+[32m+[m[32m    vertical-align: middle;[m
+[32m+[m[32m    display: inline-block;[m
+[32m+[m[32m}[m
+[32m+[m[32m.nft-owner-card .status-icon .fa-check-circle {[m
+[32m+[m[32m    color: #27ae60;[m
+[32m+[m[32m}[m
+[32m+[m[32m.nft-owner-card .status-icon .fa-times-circle {[m
+[32m+[m[32m    color: #e74c3c;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* --- Vote Page Styles --- */[m
+[32m+[m[32m.candidate-vote-row {[m
+[32m+[m[32m    display: flex;[m
+[32m+[m[32m    align-items: center;[m
+[32m+[m[32m    justify-content: flex-start;[m
+[32m+[m[32m    gap: 1.2rem;[m
+[32m+[m[32m    margin-bottom: 1.1rem;[m
+[32m+[m[32m    background: rgba(255,255,240,0.7);[m
+[32m+[m[32m    border-radius: 7px;[m
+[32m+[m[32m    padding: 0.7rem 1.2rem;[m
+[32m+[m[32m    box-shadow: 0 1px 4px rgba(0,0,0,0.04);[m
+[32m+[m[32m}[m
+[32m+[m[32m#vote-form label {[m
+[32m+[m[32m    font-size: 1.08rem;[m
+[32m+[m[32m    font-weight: 500;[m
+[32m+[m[32m    color: #2F4F4F;[m
+[32m+[m[32m    width: 100%;[m
+[32m+[m[32m    cursor: pointer;[m
+[32m+[m[32m}[m
+[32m+[m[32m#vote-form input[type="radio"] {[m
+[32m+[m[32m    accent-color: #27ae60;[m
+[32m+[m[32m    width: 1.1rem;[m
+[32m+[m[32m    height: 1.1rem;[m
+[32m+[m[32m}[m
+[32m+[m[32m#vote-actions .btn-main {[m
+[32m+[m[32m    margin: 0.5rem 0.5rem 0 0;[m
+[32m+[m[32m    min-width: 140px;[m
+[32m+[m[32m}[m
+[32m+[m[32m#vote-actions .btn-main[disabled], #vote-actions .btn-main[style*="opacity:0.5"] {[m
+[32m+[m[32m    opacity: 0.5;[m
+[32m+[m[32m    pointer-events: none;[m
+[32m+[m[32m}[m
+[32m+[m[32m#vote-status {[m
+[32m+[m[32m    margin-top: 1.2rem;[m
+[32m+[m[32m    font-size: 1.08rem;[m
+[32m+[m[32m    font-weight: 500;[m
+[32m+[m[32m}[m
+[32m+[m[32m@media (max-width: 700px) {[m
+[32m+[m[32m    .candidate-vote-row {[m
+[32m+[m[32m        flex-direction: column;[m
+[32m+[m[32m        align-items: flex-start;[m
+[32m+[m[32m        padding: 0.7rem 0.5rem;[m
+[32m+[m[32m    }[m
+[32m+[m[32m    #vote-form label {[m
+[32m+[m[32m        font-size: 1rem;[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/frontend/profile.js b/frontend/profile.js[m
+[1mindex 8e33390..ab939a7 100644[m
+[1m--- a/frontend/profile.js[m
+[1m+++ b/frontend/profile.js[m
+[36m@@ -174,12 +174,11 @@[m [masync function loadUserVotings() {[m
+                     <p>End: ${new Date(voting.endTime * 1000).toLocaleString()}</p>[m
+                 </div>[m
+                 ${isOngoing ?[m
+[31m-                    `<button class="btn-edit" onclick="editVoting('${voting.identifier}')">[m
+[32m+[m[32m                    `<button class="btn-vote btn-vote-now" onclick="editVoting('${voting.identifier}')">[m
+                         <i class="fas fa-edit"></i> Edit Voting[m
+                     </button>` :[m
+[31m-                    `<button class="btn-result" onclick="viewResults('${voting.identifier}')">[m
+[31m-                        <i class="fas fa-chart-bar"></i> View Results[m
+[31m-                    </button>`[m
+[32m+[m[32m                    `[m
+[32m+[m[32m                    <a href="result.html?id=${voting.identifier}" class="btn-result" >View Result</a>`[m
+                 }[m
+             `;[m
+             votingsList.appendChild(votingCard);[m
+[1mdiff --git a/frontend/result.html b/frontend/result.html[m
+[1mindex fdfe598..a9ba1d1 100644[m
+[1m--- a/frontend/result.html[m
+[1m+++ b/frontend/result.html[m
+[36m@@ -36,9 +36,9 @@[m
+     </header>[m
+     <main>[m
+         <div class="container">[m
+[31m-            <div id="result-header" class="welcome-section" style="margin-bottom:2rem;">[m
+[31m-                <h2>Voting Result</h2>[m
+[31m-                <p id="creator-name">Loading creator info...</p>[m
+[32m+[m[32m            <div id="voting-details-section" class="ongoing-votings-section" style="margin-bottom:2rem;">[m
+[32m+[m[32m                <h2>Voting Details</h2>[m
+[32m+[m[32m                <div id="voting-details"></div>[m
+             </div>[m
+             <div id="candidates-section" class="ongoing-votings-section" style="margin-bottom:2rem;">[m
+                 <h2>Candidates & Votes</h2>[m
+[36m@@ -49,10 +49,6 @@[m
+                 <div id="winner-animation"></div>[m
+                 <p id="winner-name"></p>[m
+             </div>[m
+[31m-            <div id="voting-details-section" class="ongoing-votings-section" style="margin-bottom:2rem;">[m
+[31m-                <h2>Voting Details</h2>[m
+[31m-                <div id="voting-details"></div>[m
+[31m-            </div>[m
+             <div id="nft-owners-section" class="ongoing-votings-section">[m
+                 <h2>NFT Owners & Voting Status</h2>[m
+                 <div id="nft-owners-list" class="votings-grid"></div>[m
+[1mdiff --git a/frontend/result.js b/frontend/result.js[m
+[1mindex c62dc45..83b3294 100644[m
+[1m--- a/frontend/result.js[m
+[1m+++ b/frontend/result.js[m
+[36m@@ -127,14 +127,15 @@[m [masync function loadResult(identifier) {[m
+         }[m
+         const startTime = start ? new Date(Number(start) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';[m
+         const endTime = end ? new Date(Number(end) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';[m
+[31m-        document.getElementById('creator-name').innerHTML = `<b>Creator:</b> <span class="contract-address">${creatorAddr}</span>`;[m
+         document.getElementById('voting-details').innerHTML = `[m
+             <p><b>Title:</b> ${title}</p>[m
+[31m-            <p><b>Identifier:</b> ${identifier}</p>[m
+[32m+[m[32m            <p><b>Identifier:</b> ${identifier}</p>[m[41m [m
+[32m+[m[32m            <p><b>Creator:</b> <span class="contract-address">${creatorAddr}</span></p>[m
+             <p><b>Description:</b> ${description}</p>[m
+             <p><b>NFT Contract:</b> <span class="contract-address">${nftContract}</span></p>[m
+             <p><b>Start Time:</b> ${startTime} (IST)</p>[m
+             <p><b>End Time:</b> ${endTime} (IST)</p>[m
+[32m+[m[41m           [m
+         `;[m
+         // 6. NFT Owners & Voting Status[m
+         let owners = [];[m
+[36m@@ -155,7 +156,7 @@[m [masync function loadResult(identifier) {[m
+                 } catch (e) {}[m
+                 const ownerCard = document.createElement('div');[m
+                 ownerCard.className = 'voting-card nft-owner-card';[m
+[31m-                ownerCard.innerHTML = `<span class="contract-address">${addr}</span> <span style="float:right;">${voted ? '<i class=\'fas fa-check-circle\' style=\'color:#27ae60;\'></i>' : '<i class=\'fas fa-times-circle\' style=\'color:#e74c3c;\'></i>'}</span>`;[m
+[32m+[m[32m                ownerCard.innerHTML = `<span class="contract-address">${addr}</span> <span class="status-icon" title="${voted ? 'Voted' : 'Not Voted'}">${voted ? '<i class=\'fas fa-check-circle\'></i>' : '<i class=\'fas fa-times-circle\'></i>'}</span>`;[m
+                 ownersList.appendChild(ownerCard);[m
+             }[m
+         }[m

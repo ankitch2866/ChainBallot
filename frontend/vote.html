@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chain-Ballot | Voting Result</title>
+    <title>Chain-Ballot | Vote</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="main.css">
 </head>
@@ -40,14 +40,13 @@
                 <h2>Voting Details</h2>
                 <div id="voting-details"></div>
             </div>
-            <div id="candidates-section" class="ongoing-votings-section" style="margin-bottom:2rem;">
-                <h2>Candidates & Votes</h2>
-                <div id="candidates-list" class="votings-grid"></div>
-            </div>
-            <div id="winner-section" class="welcome-section" style="margin-bottom:2rem; display:none;">
-                <h2>Winner</h2>
-                <div id="winner-animation"></div>
-                <p id="winner-name"></p>
+            <div id="candidates-voting-section" class="ongoing-votings-section" style="margin-bottom:2rem;">
+                <h2>Candidates & Voting</h2>
+                <form id="vote-form">
+                    <div id="candidates-list" class="votings-grid"></div>
+                    <div id="vote-actions" style="margin-top:2rem; text-align:center;"></div>
+                    <div id="vote-status" style="margin-top:1rem; text-align:center;"></div>
+                </form>
             </div>
             <div id="nft-owners-section" class="ongoing-votings-section">
                 <h2>NFT Owners & Voting Status</h2>
@@ -102,6 +101,6 @@
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
-    <script src="result.js"></script>
+    <script src="vote.js"></script>
 </body>
 </html> 

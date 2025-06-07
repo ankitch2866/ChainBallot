@@ -610,11 +610,14 @@ footer {
     justify-content: space-between;
     background: linear-gradient(90deg, rgba(255,215,0,0.07), rgba(46,204,113,0.07));
     border: 1.5px solid #FFD70033;
-    padding: 1rem 1.5rem;
+    padding: 1.2rem 1.8rem;
     font-size: 1rem;
     margin-bottom: 0.5rem;
     border-radius: 8px;
     animation: fadeIn 0.7s;
+    min-width: 0;
+    word-break: break-all;
+    gap: 2rem;
 }
 
 .btn-result, .btn-vote-now {
@@ -675,4 +678,138 @@ footer {
 .btn-result:hover::after, .btn-vote-now:hover::after {
     left: 120%;
     transition: left 0.5s;
+}
+
+#nft-owners-list.votings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+.nft-owner-card .contract-address {
+    font-size: 1rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.08);
+    word-break: break-all;
+    max-width: 100%;
+    display: inline-block;
+}
+
+.nft-owner-card .status-icon {
+    margin-left: 1.2rem;
+    font-size: 1.7rem;
+    vertical-align: middle;
+}
+
+@media (max-width: 700px) {
+    #nft-owners-list.votings-grid {
+        grid-template-columns: 1fr;
+    }
+    .nft-owner-card {
+        padding: 1rem 0.7rem;
+        font-size: 0.95rem;
+    }
+}
+
+#voting-details-section {
+    background: rgba(255,255,240,0.98);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 2.2rem 2.5rem 2rem 2.5rem;
+    margin-bottom: 2.5rem;
+    border: 1.5px solid #FFD70033;
+}
+#voting-details-section h2 {
+    text-align: center;
+    color: #2F4F4F;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+#voting-details-section p {
+    margin: 0.7rem 0;
+    font-size: 1.08rem;
+    color: #2F4F4F;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+}
+#voting-details-section .contract-address {
+    background: #f3f3e6;
+    color: #27ae60;
+    padding: 0.22rem 0.7rem;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 1.01rem;
+}
+.nft-owner-card {
+    gap: 1rem;
+}
+.nft-owner-card .contract-address {
+    font-size: 1rem;
+    padding: 0.3rem 1.1rem;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.08);
+    word-break: break-all;
+    max-width: 100%;
+    display: inline-block;
+}
+.nft-owner-card .status-icon {
+    margin-left: 0.7rem;
+    font-size: 1.7rem;
+    vertical-align: middle;
+    display: inline-block;
+}
+.nft-owner-card .status-icon .fa-check-circle {
+    color: #27ae60;
+}
+.nft-owner-card .status-icon .fa-times-circle {
+    color: #e74c3c;
+}
+
+/* --- Vote Page Styles --- */
+.candidate-vote-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.2rem;
+    margin-bottom: 1.1rem;
+    background: rgba(255,255,240,0.7);
+    border-radius: 7px;
+    padding: 0.7rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+#vote-form label {
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #2F4F4F;
+    width: 100%;
+    cursor: pointer;
+}
+#vote-form input[type="radio"] {
+    accent-color: #27ae60;
+    width: 1.1rem;
+    height: 1.1rem;
+}
+#vote-actions .btn-main {
+    margin: 0.5rem 0.5rem 0 0;
+    min-width: 140px;
+}
+#vote-actions .btn-main[disabled], #vote-actions .btn-main[style*="opacity:0.5"] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+#vote-status {
+    margin-top: 1.2rem;
+    font-size: 1.08rem;
+    font-weight: 500;
+}
+@media (max-width: 700px) {
+    .candidate-vote-row {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.7rem 0.5rem;
+    }
+    #vote-form label {
+        font-size: 1rem;
+    }
 }

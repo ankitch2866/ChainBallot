@@ -174,12 +174,11 @@ async function loadUserVotings() {
                     <p>End: ${new Date(voting.endTime * 1000).toLocaleString()}</p>
                 </div>
                 ${isOngoing ?
-                    `<button class="btn-edit" onclick="editVoting('${voting.identifier}')">
+                    `<button class="btn-vote btn-vote-now" onclick="editVoting('${voting.identifier}')">
                         <i class="fas fa-edit"></i> Edit Voting
                     </button>` :
-                    `<button class="btn-result" onclick="viewResults('${voting.identifier}')">
-                        <i class="fas fa-chart-bar"></i> View Results
-                    </button>`
+                    `
+                    <a href="result.html?id=${voting.identifier}" class="btn-result" >View Result</a>`
                 }
             `;
             votingsList.appendChild(votingCard);
