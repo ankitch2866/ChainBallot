@@ -19,7 +19,10 @@ const VotingABI = [
 ];
 const NFTFactoryABI = [
     {"inputs": [{"internalType": "string", "name": "identifier", "type": "string"}], "name": "getUsersWithNFTs", "outputs": [{"internalType": "address[]", "name": "", "type": "address[]"}], "stateMutability": "view", "type": "function"},
-    {"inputs": [{"internalType": "string", "name": "identifier", "type": "string"}], "name": "hasReceived", "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [
+        {"internalType": "string", "name": "identifier", "type": "string"},
+        {"internalType": "address", "name": "user", "type": "address"}
+    ], "name": "hasReceived", "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "view", "type": "function"},
     {"inputs": [{"internalType": "string", "name": "identifier", "type": "string"}], "name": "identifierToOwner", "outputs": [{"internalType": "address", "name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
     {"inputs": [{"internalType": "string", "name": "identifier", "type": "string"}], "name": "registerUser", "outputs": [], "stateMutability": "nonpayable", "type": "function"}
 ];
@@ -33,8 +36,18 @@ function getQueryParam(param) {
     return urlParams.get(param);
 }
 
+function getReadOnlyWeb3() {
+    // Always return a web3 instance using public RPC for read-only
+    return new Web3('https://polygon-rpc.com');
+}
+
 async function init() {
-    web3 = new Web3(window.ethereum || new Web3.providers.HttpProvider('https://polygon-rpc.com'));
+    // Use MetaMask provider if available, otherwise fallback to public Polygon RPC
+    if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+    } else {
+        web3 = getReadOnlyWeb3();
+    }
     votingContract = new web3.eth.Contract(VotingABI, VotingAddress);
     nftFactoryContract = new web3.eth.Contract(NFTFactoryABI, NFTFactoryAddress);
 
@@ -44,27 +57,39 @@ async function init() {
         return;
     }
 
-    // Connect wallet if not already
+    // Try to get wallet account, but do not require it for fetching details
+    userAccount = undefined;
+    let hasWallet = false;
     if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userAccount = accounts[0];
-    } else {
-        document.getElementById('voting-details').innerHTML = '<div class="error-message">Please install MetaMask to vote.</div>';
-        return;
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts && accounts.length > 0) {
+                userAccount = accounts[0];
+                hasWallet = true;
+            }
+        } catch (e) {}
+    }
+    if (!userAccount && localStorage.getItem('connectedWallet')) {
+        userAccount = localStorage.getItem('connectedWallet');
+        hasWallet = true;
     }
 
-    // Fetch all sections in parallel for speed
+    // Always fetch and display all sections
     await Promise.all([
         renderVotingDetails(identifier),
-        renderCandidatesVoting(identifier),
+        renderCandidatesVoting(identifier, hasWallet),
         renderNFTOwners(identifier)
     ]);
 }
 
 async function renderVotingDetails(identifier) {
+    // Always use read-only web3 for details
+    const readWeb3 = getReadOnlyWeb3();
+    const votingRead = new readWeb3.eth.Contract(VotingABI, VotingAddress);
+    const nftRead = new readWeb3.eth.Contract(NFTFactoryABI, NFTFactoryAddress);
     try {
         let title = '', description = '', nftContract = '', start = '', end = '', creatorAddr = '';
-        const details = await votingContract.methods.getVotingDetails(identifier).call();
+        const details = await votingRead.methods.getVotingDetails(identifier).call();
         if (Array.isArray(details)) {
             [title, description, nftContract] = details;
         } else {
@@ -72,9 +97,9 @@ async function renderVotingDetails(identifier) {
             description = details.description;
             nftContract = details.nftContract;
         }
-        start = await votingContract.methods.getStartDate(identifier).call();
-        end = await votingContract.methods.getEndDate(identifier).call();
-        creatorAddr = await nftFactoryContract.methods.identifierToOwner(identifier).call();
+        start = await votingRead.methods.getStartDate(identifier).call();
+        end = await votingRead.methods.getEndDate(identifier).call();
+        creatorAddr = await nftRead.methods.identifierToOwner(identifier).call();
         const startTime = start ? new Date(Number(start) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';
         const endTime = end ? new Date(Number(end) * 1000).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '';
         document.getElementById('voting-details').innerHTML = `
@@ -91,7 +116,11 @@ async function renderVotingDetails(identifier) {
     }
 }
 
-async function renderCandidatesVoting(identifier) {
+async function renderCandidatesVoting(identifier, hasWallet) {
+    // Always use read-only web3 for candidate data
+    const readWeb3 = getReadOnlyWeb3();
+    const votingRead = new readWeb3.eth.Contract(VotingABI, VotingAddress);
+    const nftRead = new readWeb3.eth.Contract(NFTFactoryABI, NFTFactoryAddress);
     const candidatesList = document.getElementById('candidates-list');
     const voteActions = document.getElementById('vote-actions');
     const voteStatus = document.getElementById('vote-status');
@@ -100,7 +129,7 @@ async function renderCandidatesVoting(identifier) {
     voteStatus.innerHTML = '';
     let candidates = [], votes = [];
     try {
-        const votingData = await votingContract.methods.getVotingData(identifier).call();
+        const votingData = await votingRead.methods.getVotingData(identifier).call();
         candidates = votingData[0];
         votes = votingData[1];
     } catch (e) {
@@ -108,22 +137,31 @@ async function renderCandidatesVoting(identifier) {
         return;
     }
 
-    // Always get the latest userAccount from MetaMask
-    if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts && accounts.length > 0) {
-            userAccount = accounts[0];
+    // Get wallet connection status and eligibility
+    let connected = hasWallet;
+    let hasVoted = false, hasNFT = false;
+    let currentAccount = undefined;
+    if (connected) {
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts && accounts.length > 0) {
+                    currentAccount = accounts[0];
+                }
+            } catch (e) {}
+        }
+        if (!currentAccount && localStorage.getItem('connectedWallet')) {
+            currentAccount = localStorage.getItem('connectedWallet');
+        }
+        if (currentAccount) {
+            try {
+                hasVoted = await votingContract.methods.hasVoterVoted(identifier, currentAccount).call();
+            } catch (e) {}
+            try {
+                hasNFT = await nftFactoryContract.methods.hasReceived(identifier, currentAccount).call();
+            } catch (e) {}
         }
     }
-
-    // Check voting eligibility
-    let hasVoted = false, hasNFT = false;
-    try {
-        hasVoted = await votingContract.methods.hasVoterVoted(identifier, userAccount).call();
-    } catch (e) {}
-    try {
-        hasNFT = await nftFactoryContract.methods.hasReceived(identifier, userAccount).call();
-    } catch (e) {}
 
     // Render candidates with radio buttons and votes
     candidates.forEach((c, i) => {
@@ -131,7 +169,7 @@ async function renderCandidatesVoting(identifier) {
         row.className = 'candidate-vote-row';
         row.innerHTML = `
             <label style="display:flex;align-items:center;gap:1.2rem;font-size:1.08rem;">
-                <input type="radio" name="candidate" value="${c}" style="margin-right:0.7rem;" ${hasVoted ? 'disabled' : ''}>
+                <input type="radio" name="candidate" value="${c}" style="margin-right:0.7rem;" ${(connected && hasNFT && !hasVoted) ? '' : 'disabled'}>
                 <span style="min-width:120px;display:inline-block;">${c}</span>
                 <span style="font-weight:bold;">${votes[i]}</span>
             </label>
@@ -139,106 +177,120 @@ async function renderCandidatesVoting(identifier) {
         candidatesList.appendChild(row);
     });
 
-    // Voting logic: if hasVoted, show message and hide both buttons
-    if (hasVoted) {
+    // Voting logic:
+    // 1. If not connected, hide both buttons
+    // 2. If hasVoted, show message and hide both buttons
+    // 3. If hasNFT, show Vote button
+    // 4. If !hasNFT, show only Request button
+    if (!connected || !currentAccount) {
+        voteActions.innerHTML = '';
+    } else if (hasVoted) {
         voteActions.innerHTML = '<div class="error-message" style="font-weight:bold;">You have already voted. Only one vote allowed per user.</div>';
-    } else {
+    } else if (hasNFT) {
         voteActions.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;gap:0.7rem;">
                 <button id="vote-btn" class="btn-result" style="width:220px;">Vote</button>
-                <div style="font-size:0.98rem;color:#2F4F4F;margin-bottom:0.2rem;"><br>Click on <b>"Get Access for Voting"</b> to request access for voting NFT if you don't have one.</div>
+            </div>
+        `;
+    } else {
+        voteActions.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.7rem;">
                 <button id="get-access-btn" class="btn-vote-now" style="width:170px;font-size:0.97rem;">Get Access for Voting</button>
             </div>
         `;
     }
 
     // Vote button handler
-    if (!hasVoted) {
-        document.getElementById('vote-btn').onclick = async (e) => {
-            e.preventDefault();
-            const selected = document.querySelector('input[name="candidate"]:checked');
-            if (!selected) {
-                voteStatus.innerHTML = '<div class="error-message">Please select a candidate to vote.</div>';
-                return;
-            }
-            // Find the exact candidate string from the candidates array
-            const candidateName = candidates.find(c => c === selected.value);
-            if (!candidateName) {
-                voteStatus.innerHTML = '<div class="error-message">Invalid candidate selected.</div>';
-                return;
-            }
-            voteStatus.innerHTML = 'Processing vote...';
-            try {
-                // Debug: log types and values
-                console.log('identifier:', identifier, typeof identifier);
-                console.log('candidateName:', candidateName, typeof candidateName);
-                console.log('userAccount:', userAccount, typeof userAccount);
-                // Ensure both are strings
-                const idStr = String(identifier);
-                const candStr = String(candidateName);
-                // Use same gas logic as get access button
-                const gasPrice = await web3.eth.getGasPrice();
-                await votingContract.methods.vote(idStr, candStr).send({ from: userAccount, gas: 300000, gasPrice });
-                voteStatus.innerHTML = '<span style="color:#27ae60;font-weight:bold;">Vote successful!</span>';
-                setTimeout(() => window.location.reload(), 1500);
-            } catch (err) {
-                voteStatus.innerHTML = `<span style="color:#e74c3c;">Error: ${err.message || 'Transaction failed.'}</span>`;
-                console.error('Vote error:', err);
-            }
-        };
-        document.getElementById('get-access-btn').onclick = async (e) => {
-            e.preventDefault();
-            voteStatus.innerHTML = 'Processing access...';
-            voteStatus.style.color = '#3498db';
-            try {
-                if (!window.ethereum) {
-                    voteStatus.innerHTML = '<span style="color:#e74c3c;">MetaMask not found. Please install MetaMask.</span>';
+    if (connected && !hasVoted && hasNFT) {
+        const voteBtn = document.getElementById('vote-btn');
+        if (voteBtn) {
+            voteBtn.onclick = async (e) => {
+                e.preventDefault();
+                const selected = document.querySelector('input[name="candidate"]:checked');
+                if (!selected) {
+                    voteStatus.innerHTML = '<div class="error-message">Please select a candidate to vote.</div>';
                     return;
                 }
-                // Ensure wallet is connected
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                userAccount = account;
-                // Ensure correct network (Polygon Mainnet, chainId: 137)
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                if (chainId !== '0x89') {
-                    voteStatus.innerHTML = '<span style="color:#e74c3c;">Please switch to the Polygon network in MetaMask.</span>';
+                // Find the exact candidate string from the candidates array
+                const candidateName = candidates.find(c => c === selected.value);
+                if (!candidateName) {
+                    voteStatus.innerHTML = '<div class="error-message">Invalid candidate selected.</div>';
                     return;
                 }
-                // Get current gas price
-                const gasPrice = await web3.eth.getGasPrice();
-                // Send transaction to registerUser (only identifier)
-                await nftFactoryContract.methods.registerUser(identifier).send({
-                    from: account,
-                    gas: 300000,
-                    gasPrice: gasPrice
-                });
-                voteStatus.innerHTML = '<span style="color:#27ae60;font-weight:bold;">Access requested! Please wait for approval and again after some time.</span>';
-                setTimeout(() => renderCandidatesVoting(identifier), 4000);
-            } catch (err) {
-                let msg = 'Transaction failed. Please check if you are on the correct network and have enough gas.';
-                if (err && err.message) {
-                    if (err.message.includes('User denied')) {
-                        msg = 'Transaction was rejected by user.';
-                    } else if (err.message.includes('insufficient funds')) {
-                        msg = 'Insufficient funds for gas. Please add more MATIC to your wallet.';
-                    } else if (err.message.includes('network') || err.message.includes('chain')) {
-                        msg = 'Please switch to the Polygon network in MetaMask.';
-                    } else {
-                        msg = err.message;
+                voteStatus.innerHTML = 'Processing vote...';
+                try {
+                    const idStr = String(identifier);
+                    const candStr = String(candidateName);
+                    const gasPrice = await web3.eth.getGasPrice();
+                    await votingContract.methods.vote(idStr, candStr).send({ from: currentAccount, gas: 300000, gasPrice });
+                    voteStatus.innerHTML = '<span style="color:#27ae60;font-weight:bold;">Vote successful!</span>';
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch (err) {
+                    voteStatus.innerHTML = `<span style="color:#e74c3c;">Error: ${err.message || 'Transaction failed.'}</span>`;
+                }
+            };
+        }
+    }
+    if (connected && !hasVoted && !hasNFT) {
+        const getAccessBtn = document.getElementById('get-access-btn');
+        if (getAccessBtn) {
+            getAccessBtn.onclick = async (e) => {
+                e.preventDefault();
+                voteStatus.innerHTML = 'Processing access...';
+                voteStatus.style.color = '#3498db';
+                try {
+                    if (!window.ethereum) {
+                        voteStatus.innerHTML = '<span style="color:#e74c3c;">MetaMask not found. Please install MetaMask.</span>';
+                        return;
                     }
+                    // Ensure wallet is connected
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const account = accounts[0];
+                    userAccount = account;
+                    // Ensure correct network (Polygon Mainnet, chainId: 137)
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    if (chainId !== '0x89') {
+                        voteStatus.innerHTML = '<span style="color:#e74c3c;">Please switch to the Polygon network in MetaMask.</span>';
+                        return;
+                    }
+                    // Get current gas price
+                    const gasPrice = await web3.eth.getGasPrice();
+                    // Send transaction to registerUser (only identifier)
+                    await nftFactoryContract.methods.registerUser(identifier).send({
+                        from: account,
+                        gas: 300000,
+                        gasPrice: gasPrice
+                    });
+                    voteStatus.innerHTML = '<span style="color:#27ae60;font-weight:bold;">Access requested! Please wait for approval and try again after some time.</span>';
+                    setTimeout(() => renderCandidatesVoting(identifier, true), 4000);
+                } catch (err) {
+                    let msg = 'Transaction failed. Please check if you are on the correct network and have enough gas.';
+                    if (err && err.message) {
+                        if (err.message.includes('User denied')) {
+                            msg = 'Transaction was rejected by user.';
+                        } else if (err.message.includes('insufficient funds')) {
+                            msg = 'Insufficient funds for gas. Please add more MATIC to your wallet.';
+                        } else if (err.message.includes('network') || err.message.includes('chain')) {
+                            msg = 'Please switch to the Polygon network in MetaMask.';
+                        } else {
+                            msg = err.message;
+                        }
+                    }
+                    voteStatus.innerHTML = `<span style="color:#e74c3c;">Error: ${msg}</span>`;
                 }
-                voteStatus.innerHTML = `<span style="color:#e74c3c;">Error: ${msg}</span>`;
-            }
-        };
+            };
+        }
     }
 }
 
-
 async function renderNFTOwners(identifier) {
+    // Always use read-only web3 for NFT owners
+    const readWeb3 = getReadOnlyWeb3();
+    const nftRead = new readWeb3.eth.Contract(NFTFactoryABI, NFTFactoryAddress);
+    const votingRead = new readWeb3.eth.Contract(VotingABI, VotingAddress);
     let owners = [];
     try {
-        owners = await nftFactoryContract.methods.getUsersWithNFTs(identifier).call();
+        owners = await nftRead.methods.getUsersWithNFTs(identifier).call();
     } catch (e) { owners = []; }
     const ownersList = document.getElementById('nft-owners-list');
     ownersList.innerHTML = '';
@@ -249,7 +301,7 @@ async function renderNFTOwners(identifier) {
     for (const addr of owners) {
         let voted = false;
         try {
-            voted = await votingContract.methods.hasVoterVoted(identifier, addr).call();
+            voted = await votingRead.methods.hasVoterVoted(identifier, addr).call();
         } catch (e) {}
         const ownerCard = document.createElement('div');
         ownerCard.className = 'voting-card nft-owner-card';
